@@ -1,0 +1,23 @@
+{
+  "name": "guideline_index_tool",
+  "entrypoint": "plugins.guideline_index_tool.logic:execute",
+  "description": "Build the FAISS retrieval index from the clinical guideline / literature corpus (chunk + local embeddings).",
+  "task": "guideline-index",
+  "modality": "clinical",
+  "approval_required": false,
+  "source": "plugin",
+  "routing": {
+    "trigger_keywords": ["guideline_index", "rag_index", "build_index"]
+  },
+  "help": {
+    "summary": "Chunk + embed the guideline corpus and write a FAISS index.",
+    "options": [
+      {"name": "corpus_dir", "type": "str", "description": "Corpus directory (default examples/guidelines)"},
+      {"name": "index_dir", "type": "str", "description": "Output index directory (default data/guideline_index)"},
+      {"name": "embed_model", "type": "str", "description": "SentenceTransformer model id (default BAAI/bge-m3)"},
+      {"name": "chunk_size", "type": "int", "description": "Words per chunk (default 220)"},
+      {"name": "chunk_overlap", "type": "int", "description": "Word overlap between chunks (default 40)"}
+    ],
+    "examples": ["@guideline_index help", "@guideline_index"]
+  }
+}

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import dynamic from "next/dynamic";
 
 import DicomInteractiveViewer from "./DicomInteractiveViewer";
+import GuidelineRagCard from "./GuidelineRagCard";
 import IgvBrowser from "./IgvBrowser";
 
 const NiivueViewer = dynamic(() => import("./NiivueViewer"), { ssr: false });
@@ -790,6 +791,7 @@ export function buildCustomStudioRendererRegistry({
   imageAnalysis,
   niftiAnalysis,
   fhirAnalysis,
+  guidelineRagResult,
   candidateVariants,
   searchedAnnotations,
   setSelectedAnnotationIndex,
@@ -837,6 +839,8 @@ export function buildCustomStudioRendererRegistry({
       fhirAnalysis ? (
         <FhirBrowserCard analysis={fhirAnalysis} />
       ) : null,
+    guideline_rag: () =>
+      guidelineRagResult ? <GuidelineRagCard result={guidelineRagResult} /> : null,
     cohort_browser: () =>
       spreadsheetAnalysis ? (
         <CohortBrowserCard activeView={activeStudioView} analysis={spreadsheetAnalysis} components={components} helpers={helpers} />

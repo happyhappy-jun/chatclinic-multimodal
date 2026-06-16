@@ -1,0 +1,16 @@
+# Extra deps for the clinical-guideline RAG tools (medical-rag team).
+# Install on top of the base environment.yml / requirements.txt:
+#   pip install -r requirements-rag.txt
+#
+# Retrieval (CPU is fine):
+sentence-transformers>=3.0
+faiss-cpu>=1.8
+pypdf>=4.0
+
+# MCP gateway (server + client, Streamable HTTP):
+mcp>=1.2
+
+# Generation is served separately on GPU by vLLM (see scripts/serve_qwen3_vllm.sbatch).
+# The pinned server stack lives in environment.yml:
+#   vllm==0.18.1   transformers==4.57.6   torch==2.5.1   (Qwen/Qwen3-8B)
+# The tools reach it over HTTP, so no vLLM import is needed in the backend process.

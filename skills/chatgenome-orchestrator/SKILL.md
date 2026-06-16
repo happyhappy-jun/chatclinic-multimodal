@@ -49,6 +49,12 @@ Upload a source file to get started. Supported formats: DICOM images, PNG/JPG/TI
 - `@prs_prep` — Build check, harmonization, score-file preparation
 - Auto: Summary Stats Review (column detection, schema mapping)
 
+**Clinical Guideline / Literature RAG**
+- `@guideline <clinical question>` — Evidence-grounded answer retrieved from the guideline corpus with inline `[REF#]` citations (local Qwen3-8B); add `external_evidence=true` to also pull federated MCP evidence
+- `@guideline_index` — (Re)build the FAISS retrieval index from the guideline corpus
+- `@citation_check` — Verify that each cited claim in a grounded answer is supported by its passage (faithfulness guard)
+- `@mcp [action=list|call]` — Discover or call tools on federated external MCP servers (server-to-server / agent2agent)
+
 ### Tips
 
 - `@toolname help` — Show detailed options for any tool
@@ -129,6 +135,11 @@ Later tools should include:
 - Use `symbolic_alt_tool` to split symbolic ALT records into a dedicated review path.
 - Chat should refer to tool outputs and Studio summaries as the trusted state.
 - If a tool fails, preserve the prior direct implementation as fallback until migration is complete.
+- Use `guideline_index_tool` once to build the FAISS retrieval index before any guideline RAG query, and again whenever the guideline corpus changes.
+- Use `guideline_rag_tool` for clinical questions that should be answered from the guideline/literature corpus rather than free-form knowledge; it retrieves passages first and grounds a cited answer second. Set `external_evidence=true` to fuse federated MCP evidence when fresh literature is wanted.
+- Use `citation_verifier_tool` after a grounded answer to confirm each `[REF#]` claim is supported by its passage; surface unsupported claims rather than hiding them.
+- Use `mcp_federation_tool` (`action=list`) to discover external MCP server tools and (`action=call`) to invoke one; treat unreachable servers as a reported error, never a hard failure.
+- For guideline RAG, never answer beyond the retrieved passages — return "Insufficient evidence in the provided guidelines." when the corpus does not cover the question.
 
 ## Chat policy
 

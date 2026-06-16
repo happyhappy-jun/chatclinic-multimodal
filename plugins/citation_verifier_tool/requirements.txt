@@ -1,0 +1,1 @@
+# citation_verifier_tool — no extra deps; uses the shared local-LLM HTTP client (stdlib urllib)

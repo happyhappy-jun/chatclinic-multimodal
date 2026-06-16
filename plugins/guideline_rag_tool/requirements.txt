@@ -1,0 +1,4 @@
+# guideline_rag_tool — retrieval deps (generation is served separately by vLLM over HTTP)
+sentence-transformers>=3.0
+faiss-cpu>=1.8
+numpy<2.5

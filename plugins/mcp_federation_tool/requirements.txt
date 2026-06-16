@@ -1,0 +1,2 @@
+# mcp_federation_tool — MCP client/server SDK (Streamable HTTP)
+mcp>=1.2

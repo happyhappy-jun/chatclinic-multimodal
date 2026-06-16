@@ -30,3 +30,8 @@ uploads/
 references/
 third_party/
 data/
+logs/
+
+# Medical-RAG submission package: keep references docs despite the global references/ ignore
+!submission/references/
+!submission/references/**

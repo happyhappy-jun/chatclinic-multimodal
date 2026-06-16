@@ -1,0 +1,20 @@
+{
+  "name": "citation_verifier_tool",
+  "entrypoint": "plugins.citation_verifier_tool.logic:execute",
+  "description": "Faithfulness / hallucination guard: for each cited claim in a grounded answer, verify the cited passage actually supports it and report a faithfulness score.",
+  "task": "citation-check",
+  "modality": "clinical",
+  "approval_required": false,
+  "source": "plugin",
+  "routing": {
+    "trigger_keywords": ["citation_check", "verify_citations", "faithfulness"]
+  },
+  "help": {
+    "summary": "Check that each [REF#] claim in an answer is supported by its passage.",
+    "options": [
+      {"name": "draft_answer", "type": "str", "description": "Grounded answer text containing [REF#] citations"},
+      {"name": "passages", "type": "list", "description": "Retrieved passages (ref_id + text) to check against"}
+    ],
+    "examples": ["@citation_check help"]
+  }
+}

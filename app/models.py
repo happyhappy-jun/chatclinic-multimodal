@@ -913,3 +913,86 @@ class RPlotResponse(BaseModel):
     command_preview: str
     artifacts: list[RPlotArtifact]
     warnings: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Clinical Guideline / Literature RAG (AI619 medical-rag team)
+# ---------------------------------------------------------------------------
+
+
+class GuidelineIndexRequest(BaseModel):
+    corpus_dir: Optional[str] = Field(default=None, description="Corpus directory (default examples/guidelines)")
+    index_dir: Optional[str] = Field(default=None, description="Output index directory (default data/guideline_index)")
+    embed_model: Optional[str] = Field(default=None, description="SentenceTransformer model id (default BAAI/bge-m3)")
+    chunk_size: int = Field(default=220, description="Words per chunk")
+    chunk_overlap: int = Field(default=40, description="Word overlap between chunks")
+
+
+class GuidelineIndexResponse(BaseModel):
+    index_dir: str
+    embed_model: str
+    n_docs: int
+    n_chunks: int
+    dim: int
+    documents: list[str] = []
+    draft_answer: str = ""
+
+
+class RetrievedPassage(BaseModel):
+    ref_id: str
+    doc_title: str
+    source: str
+    url: Optional[str] = None
+    chunk_id: str
+    text: str
+    score: float
+
+
+class CitationClaim(BaseModel):
+    claim: str
+    ref_id: Optional[str] = None
+    supported: bool
+    evidence_span: Optional[str] = None
+    note: Optional[str] = None
+
+
+class CitationCheckRequest(BaseModel):
+    draft_answer: str
+    passages: list[RetrievedPassage] = []
+
+
+class CitationCheckResponse(BaseModel):
+    claims: list[CitationClaim] = []
+    total_claims: int = 0
+    supported_count: int = 0
+    unsupported_count: int = 0
+    faithfulness: float = 1.0
+
+
+class GuidelineRagRequest(BaseModel):
+    question: str = Field(..., description="Clinical question to answer")
+    top_k: int = Field(default=6, description="Number of passages to retrieve")
+    min_score: float = Field(default=0.2, description="Minimum cosine similarity to keep a passage")
+    source_context: Optional[str] = Field(default=None, description="Optional context from an uploaded source")
+    index_dir: Optional[str] = Field(default=None, description="Index directory override")
+    verify: bool = Field(default=True, description="Run the citation verifier on the answer")
+    external_evidence: bool = Field(default=False, description="Also pull evidence from federated external MCP servers")
+    external_max: int = Field(default=3, description="Max external MCP evidence items to merge")
+
+
+class McpCallRequest(BaseModel):
+    server: str = Field(..., description="External MCP server name (from mcp_servers.json)")
+    tool: str = Field(..., description="Tool name to invoke on that server")
+    arguments: dict[str, Any] = Field(default_factory=dict, description="Arguments for the tool")
+
+
+class GuidelineRagResponse(BaseModel):
+    question: str
+    draft_answer: str
+    references: list[ReferenceItem] = []
+    passages: list[RetrievedPassage] = []
+    uncertainty: str = ""
+    used_fallback: bool = False
+    model: str = ""
+    verifier: Optional[CitationCheckResponse] = None
+    studio: Optional[dict[str, Any]] = None

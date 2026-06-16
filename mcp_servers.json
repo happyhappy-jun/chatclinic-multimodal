@@ -1,0 +1,10 @@
+{
+  "servers": [
+    {
+      "name": "pubmed-lite",
+      "url": "http://127.0.0.1:9001/mcp",
+      "evidence_tool": "search_literature",
+      "description": "Sample external biomedical-literature MCP server (demo)."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "guideline_rag_tool",
+  "entrypoint": "plugins.guideline_rag_tool.logic:execute",
+  "description": "Evidence-grounded answer to a clinical question, retrieved from a guideline/literature corpus with inline [REF#] citations and an optional faithfulness check.",
+  "task": "guideline-rag",
+  "modality": "clinical",
+  "approval_required": false,
+  "source": "plugin",
+  "routing": {
+    "trigger_keywords": ["guideline", "evidence", "rag", "literature"]
+  },
+  "direct_chat": {
+    "endpoint": "guideline-rag",
+    "requested_view": "guideline_rag",
+    "studio": {"renderer": "guideline_rag"}
+  },
+  "help": {
+    "summary": "Ask a clinical question; get a cited, guideline-grounded answer (local Qwen3-8B).",
+    "options": [
+      {"name": "question", "type": "str", "description": "Clinical question to answer"},
+      {"name": "top_k", "type": "int", "description": "Passages to retrieve (default 6)"},
+      {"name": "min_score", "type": "float", "description": "Minimum cosine similarity to keep a passage (default 0.2)"},
+      {"name": "source_context", "type": "str", "description": "Optional extra context from an uploaded note/FHIR source"},
+      {"name": "verify", "type": "bool", "description": "Run the citation verifier (default true)"}
+    ],
+    "examples": [
+      "@guideline help",
+      "@guideline first-line antibiotics for community-acquired pneumonia"
+    ]
+  }
+}

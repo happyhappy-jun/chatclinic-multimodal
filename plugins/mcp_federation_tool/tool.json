@@ -1,0 +1,26 @@
+{
+  "name": "mcp_federation_tool",
+  "entrypoint": "plugins.mcp_federation_tool.logic:execute",
+  "description": "MCP gateway (client side): discover and invoke tools on external MCP servers over Streamable HTTP (server-to-server / agent2agent).",
+  "task": "mcp-federation",
+  "modality": "clinical",
+  "approval_required": false,
+  "source": "plugin",
+  "routing": {
+    "trigger_keywords": ["mcp", "federation", "external_tools", "agent2agent"]
+  },
+  "help": {
+    "summary": "List or call tools exposed by federated external MCP servers.",
+    "options": [
+      {"name": "action", "type": "str", "description": "'list' (default) or 'call'"},
+      {"name": "server", "type": "str", "description": "External MCP server name (for action=call)"},
+      {"name": "tool", "type": "str", "description": "Tool name on that server (for action=call)"},
+      {"name": "arguments", "type": "dict", "description": "Arguments for the called tool"}
+    ],
+    "examples": [
+      "@mcp help",
+      "@mcp",
+      "@mcp action=call server=pubmed-lite tool=search_literature"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+# guideline_index_tool — corpus loading, embedding, FAISS index build
+sentence-transformers>=3.0
+faiss-cpu>=1.8
+pypdf>=4.0
+numpy<2.5

@@ -29,6 +29,7 @@ export type StudioRendererBuilderArgs = {
   summaryStatsGridRef: RefObject<HTMLDivElement | null>;
   handleSummaryStatsGridScroll: (event: any) => void;
   loadMoreSummaryStatsRows: () => Promise<void>;
+  guidelineRagResult?: any;
   candidateVariants: any[];
   searchedAnnotations: any[];
   setSelectedAnnotationIndex: (index: number) => void;

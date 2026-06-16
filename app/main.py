@@ -96,6 +96,15 @@ from app.services.source_registry import (
     source_bootstrap_type,
     source_upload_detail,
 )
+from app.models import (
+    CitationCheckRequest,
+    CitationCheckResponse,
+    GuidelineIndexRequest,
+    GuidelineIndexResponse,
+    GuidelineRagRequest,
+    GuidelineRagResponse,
+    McpCallRequest,
+)
 from app.services.tool_runner import discover_tools
 from app.services.tool_runner import manifest_for_alias, manifest_for_tool_name, run_tool, tool_direct_chat_metadata
 from plugins.fastqc_execution_tool.logic import FASTQC_OUTPUT_DIR
@@ -698,6 +707,36 @@ def run_liftover_vcf(request: GatkLiftoverVcfRequest) -> GatkLiftoverVcfResponse
 @app.post("/api/v1/ldblockshow/run", response_model=LDBlockShowResponse)
 def run_ldblockshow_plot(request: LDBlockShowRequest) -> LDBlockShowResponse:
     return _run_registered_tool_model("ldblockshow", request.model_dump(), LDBlockShowResponse)
+
+
+@app.post("/api/v1/guideline/index", response_model=GuidelineIndexResponse)
+def build_guideline_index_endpoint(request: GuidelineIndexRequest) -> GuidelineIndexResponse:
+    return _run_registered_tool_model("guideline_index_tool", request.model_dump(), GuidelineIndexResponse)
+
+
+@app.post("/api/v1/guideline-rag/run", response_model=GuidelineRagResponse)
+def run_guideline_rag_endpoint(request: GuidelineRagRequest) -> GuidelineRagResponse:
+    return _run_registered_tool_model("guideline_rag_tool", request.model_dump(), GuidelineRagResponse)
+
+
+@app.post("/api/v1/citation-check/run", response_model=CitationCheckResponse)
+def run_citation_check_endpoint(request: CitationCheckRequest) -> CitationCheckResponse:
+    return _run_registered_tool_model("citation_verifier_tool", request.model_dump(), CitationCheckResponse)
+
+
+@app.post("/api/v1/mcp/tools")
+def mcp_list_external_tools_endpoint() -> dict:
+    """Discover tools across all configured external MCP servers (server-to-server)."""
+    _, _, result = _run_registered_tool_payload("mcp_federation_tool", {"action": "list"})
+    return result
+
+
+@app.post("/api/v1/mcp/call")
+def mcp_call_external_tool_endpoint(request: McpCallRequest) -> dict:
+    """Invoke one tool on a federated external MCP server."""
+    payload = {"action": "call", **request.model_dump()}
+    _, _, result = _run_registered_tool_payload("mcp_federation_tool", payload)
+    return result
 
 
 @app.post("/api/v1/r/plots", response_model=RPlotResponse)
