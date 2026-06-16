@@ -1,0 +1,35 @@
+{
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "model": "qwen3-8b",
+  "pubmedqa": {
+    "n": 200,
+    "closed_book_accuracy": 0.215,
+    "rag_accuracy": 0.515,
+    "rag_lift": 0.3,
+    "mean_faithfulness": 0.9167,
+    "faithfulness_n": 198
+  },
+  "mirage": {
+    "medqa": {
+      "n": 60,
+      "accuracy": 0.6167
+    },
+    "medmcqa": {
+      "n": 60,
+      "accuracy": 0.4833
+    },
+    "pubmedqa": {
+      "n": 60,
+      "accuracy": 0.55
+    },
+    "bioasq": {
+      "n": 60,
+      "accuracy": 0.8167
+    },
+    "mmlu": {
+      "n": 60,
+      "accuracy": 0.6333
+    },
+    "_macro_avg": 0.62
+  }
+}

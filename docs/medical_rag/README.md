@@ -8,6 +8,9 @@ This folder is the team's planning + design space. Read in order:
 2. **[01_SETUP.md](01_SETUP.md)** — environment setup for all three tracks (backend ✓, frontend, model/RAG stack), incl. the B200 → RTX 3090 strategy.
 3. **[02_PLUGIN_DESIGN.md](02_PLUGIN_DESIGN.md)** — the tool design: corpus, embeddings + FAISS retriever, grounded answer with citations, the verifier, and exact integration steps in this codebase.
 4. **[03_TASKS.md](03_TASKS.md)** — actionable checklist + milestones toward **Jun 18 (present)** and **Jun 21 (code due)**.
+5. **[04_DEMO.md](04_DEMO.md)** — how to run the full stack (vLLM → backend → `/guideline` page).
+6. **[05_MCP.md](05_MCP.md)** — MCP gateway (server-to-server / agent2agent over Streamable HTTP).
+7. **[06_EVAL.md](06_EVAL.md)** — PubMedQA (RAG lift + faithfulness) and MIRAGE results.
 
 ## TL;DR
 

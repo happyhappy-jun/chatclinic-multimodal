@@ -35,3 +35,7 @@ logs/
 # Medical-RAG submission package: keep references docs despite the global references/ ignore
 !submission/references/
 !submission/references/**
+
+# Eval: keep harness + results.json, ignore downloaded datasets and run logs
+eval/data/
+eval/results/run.log
