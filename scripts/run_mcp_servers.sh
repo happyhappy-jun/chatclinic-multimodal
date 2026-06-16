@@ -12,17 +12,21 @@ PY="${PY:-.venv/bin/python}"
 mkdir -p logs
 
 if [ "${1:-start}" = "stop" ]; then
+    pkill -f "mcp_servers/pubmed_server.py" 2>/dev/null || true
     pkill -f "mcp_servers/pubmed_lite_server.py" 2>/dev/null || true
     pkill -f "mcp_servers/chatclinic_rag_server.py" 2>/dev/null || true
     echo "stopped MCP servers"
     exit 0
 fi
 
-# load backend env (EMBED_MODEL / LOCAL_LLM_BASE_URL / GUIDELINE_INDEX_DIR)
+# load backend env (EMBED_MODEL / LOCAL_LLM_BASE_URL / PUBMED_EMAIL / NCBI_API_KEY)
 set -a; [ -f .env ] && . ./.env; set +a
 
+PORT=9002 "$PY" mcp_servers/pubmed_server.py        > logs/mcp-pubmed.log 2>&1 &
+echo "pubmed (live NCBI) -> http://127.0.0.1:9002/mcp  (pid $!)"
+
 PORT=9001 "$PY" mcp_servers/pubmed_lite_server.py   > logs/mcp-pubmed-lite.log 2>&1 &
-echo "pubmed-lite (external) -> http://127.0.0.1:9001/mcp  (pid $!)"
+echo "pubmed-lite (offline fallback) -> http://127.0.0.1:9001/mcp  (pid $!)"
 
 PORT=9000 "$PY" mcp_servers/chatclinic_rag_server.py > logs/mcp-rag-server.log 2>&1 &
 echo "chatclinic-guideline-rag (ours) -> http://127.0.0.1:9000/mcp  (pid $!)"

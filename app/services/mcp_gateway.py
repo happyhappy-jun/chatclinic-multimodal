@@ -129,15 +129,26 @@ def call_external_tool(server: str, tool: str, arguments: dict[str, Any] | None 
     return {"server": server, "tool": tool, **result, "json": parsed}
 
 
-def search_external_evidence(question: str, max_results: int = 3) -> list[dict[str, Any]]:
-    """Call each server's configured literature tool, normalize hits into passages."""
+def search_external_evidence(
+    question: str,
+    max_results: int = 3,
+    *,
+    candidate_pool: int = 20,
+    rerank: bool = True,
+) -> list[dict[str, Any]]:
+    """Federate evidence from external MCP servers, then semantically re-rank.
+
+    Each server contributes up to ``candidate_pool`` lexical hits (e.g. PubMed esearch);
+    we then embed the question + candidate abstracts and keep the top ``max_results`` by
+    cosine — recall from the source, precision from our embedder.
+    """
     passages: list[dict[str, Any]] = []
     for srv in load_servers():
         evidence_tool = srv.get("evidence_tool")
         if not evidence_tool:
             continue
         try:
-            res = _run(_acall_tool(srv["url"], evidence_tool, {"query": question, "max_results": max_results}))
+            res = _run(_acall_tool(srv["url"], evidence_tool, {"query": question, "max_results": candidate_pool}))
         except Exception:  # noqa: BLE001 - external server optional
             continue
         articles = []
@@ -148,15 +159,39 @@ def search_external_evidence(question: str, max_results: int = 3) -> list[dict[s
             except (json.JSONDecodeError, TypeError):
                 articles = []
         for art in articles:
+            title = art.get("title", "external result")
+            abstract = art.get("abstract") or art.get("text") or ""
             passages.append(
                 {
-                    "doc_title": art.get("title", "external result"),
+                    "doc_title": title,
                     "source": f"external MCP: {srv.get('name')}",
                     "url": art.get("url"),
                     "chunk_id": f"mcp::{srv.get('name')}::{art.get('pmid', len(passages))}",
-                    "text": art.get("abstract") or art.get("text") or "",
+                    "text": f"{title}. {abstract}".strip() if abstract else title,
                     "score": float(art.get("score", 0.0)),
                     "origin": "external_mcp",
                 }
             )
-    return passages
+
+    if rerank and len(passages) > max_results:
+        try:
+            import numpy as np
+
+            from app.services.guideline import config as gconfig
+            from app.services.guideline.embedder import embed_texts
+
+            model = gconfig.embed_model_name()
+            mat = embed_texts([p["text"] for p in passages], model)
+            qvec = embed_texts([question], model)[0]
+            sims = mat @ qvec
+            order = np.argsort(-sims)[: max_results]
+            ranked = []
+            for idx in order:
+                passage = passages[int(idx)]
+                passage["score"] = round(float(sims[int(idx)]), 4)
+                ranked.append(passage)
+            return ranked
+        except Exception:  # noqa: BLE001 - fall back to lexical order if embedder unavailable
+            pass
+
+    return passages[: max_results]

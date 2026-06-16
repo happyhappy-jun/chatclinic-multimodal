@@ -1,10 +1,15 @@
 {
   "servers": [
     {
+      "name": "pubmed",
+      "url": "http://127.0.0.1:9002/mcp",
+      "evidence_tool": "search_literature",
+      "description": "Live PubMed via NCBI E-utilities (titles + abstracts); semantically re-ranked by the gateway."
+    },
+    {
       "name": "pubmed-lite",
       "url": "http://127.0.0.1:9001/mcp",
-      "evidence_tool": "search_literature",
-      "description": "Sample external biomedical-literature MCP server (demo)."
+      "description": "Offline canned literature server (demo fallback; discoverable/callable, not used for evidence)."
     }
   ]
 }
