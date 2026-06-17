@@ -13,7 +13,7 @@ const EXAMPLES = [
 ];
 
 export default function GuidelineRagPage() {
-  const [apiBase, setApiBase] = useState("http://127.0.0.1:8001");
+  const [apiBase, setApiBase] = useState("");
   const [question, setQuestion] = useState(EXAMPLES[0]);
   const [topK, setTopK] = useState(4);
   const [externalEvidence, setExternalEvidence] = useState(false);
