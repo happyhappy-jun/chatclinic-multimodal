@@ -109,6 +109,30 @@ ssh -L 3000:localhost:3000 -L 8001:localhost:8001 <server>
 # then open http://localhost:3000/guideline
 ```
 
+## Share a temporary public demo via ngrok
+
+The frontend proxies `/api/*` to the backend (`next.config.ts`), so **only port 3000** is exposed —
+the backend (:8001) and model server (:8000) stay private.
+
+```bash
+# 1. run the stack, but serve the frontend in PRODUCTION mode (stable behind an external host)
+bash scripts/serve_qwen3_local.sh          # terminal 1 (GPU)
+NO_FRONTEND=1 bash scripts/run_all.sh       # terminal 2: backend + MCP, no dev frontend
+npm run build:webapp && npm --workspace webapp run start   # terminal 3: frontend :3000 (prod)
+
+# 2. expose ONLY the frontend
+ngrok config add-authtoken <your-token>     # one-time, from ngrok.com (free)
+ngrok http 3000
+```
+Share the `https://<random>.ngrok-free.app` URL. Open `/guideline` on it.
+
+**Safety (free tier has no auth):**
+- Expose **only 3000** — never 8000/8001.
+- ngrok shows an interstitial warning page (a mild gate). Treat the URL as semi-public.
+- **Take it down right after the demo** (`Ctrl-C` ngrok); don't leave it running.
+- The upload endpoint is open — don't post the link widely (anyone could add corpus docs).
+- Confirm this is allowed on your cluster before exposing a service.
+
 ## Portability checklist
 
 - [ ] `conda activate chatclinic` (or a venv with `vllm`) before serving.
