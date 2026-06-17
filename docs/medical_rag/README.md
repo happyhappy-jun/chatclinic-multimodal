@@ -2,6 +2,8 @@
 
 Team: 윤병준, 이현석, 김태영 · Branch: `medical-rag` · Repo: `bispl-create/chatclinic-multimodal`
 
+👉 **[FEATURES.md](FEATURES.md)** — complete catalog of everything this PR introduces (start here).
+
 This folder is the team's planning + design space. Read in order:
 
 1. **[00_OVERVIEW.md](00_OVERVIEW.md)** — what we're building, why, scope, and how it maps to the grading rubric.

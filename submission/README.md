@@ -14,6 +14,7 @@ Maps to the `chatclinic-class` final-submission package structure:
 | **Demo video** | → KLMS (not in repo) |
 
 ## Supporting docs
+- **Feature catalog (everything this PR adds): `docs/medical_rag/FEATURES.md`**
 - Design + setup + demo + MCP: `docs/medical_rag/`
 - Run guide: `docs/medical_rag/04_DEMO.md` · MCP: `docs/medical_rag/05_MCP.md`
 
