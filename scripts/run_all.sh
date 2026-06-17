@@ -56,7 +56,8 @@ if curl -s -o /dev/null --max-time 5 "${LLM%/v1}/v1/models" 2>/dev/null; then
     echo "[run_all] model server reachable ✓"
 else
     echo "[run_all] NOTE: model server not reachable at $LLM — RAG will use the extractive fallback."
-    echo "          Start it with: bash scripts/serve_qwen3_local.sh   (then set LOCAL_LLM_BASE_URL)"
+    echo "          Start it with: bash scripts/serve_qwen3_local.sh   (vLLM)"
+    echo "                     or: bash scripts/serve_qwen3_sglang.sh  (SGLang) — then set LOCAL_LLM_BASE_URL"
 fi
 
 # 1. build the retrieval index if absent

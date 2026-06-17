@@ -50,14 +50,29 @@ PUBMED_EMAIL=you@example.com                     # NCBI etiquette (no key needed
 
 ## 2. Serve the model (1× 3090)
 
+The backend only speaks the **OpenAI-compatible `/v1` API**, so the serving framework is swappable —
+use **vLLM or SGLang**; only `LOCAL_LLM_BASE_URL` differs.
+
+**Option A — vLLM** (uses the pinned `environment.yml` stack):
 ```bash
 bash scripts/serve_qwen3_local.sh
 # defaults: Qwen/Qwen3-8B, port 8000, TP=1, max_len 12288, gpu_util 0.92
-# multi-GPU: TP=2 bash scripts/serve_qwen3_local.sh
-# OOM on 24 GB? lower context: MAX_LEN=8192 bash scripts/serve_qwen3_local.sh
+# .env -> LOCAL_LLM_BASE_URL=http://localhost:8000/v1
 ```
-The script auto-detects a `noexec` `/tmp` and redirects Triton/compile caches (a cluster quirk; harmless
-elsewhere). 3090 is Ampere (sm_86) and fully supported by the pinned `cu121` stack — no B200-style rebuild.
+
+**Option B — SGLang** (install in an isolated venv to avoid clashing with the pinned torch/vllm):
+```bash
+python -m venv .sglang-runtime/venv && . .sglang-runtime/venv/bin/activate
+pip install "sglang[all]"
+bash scripts/serve_qwen3_sglang.sh
+# defaults: Qwen/Qwen3-8B, port 30000, TP=1, max_len 12288, mem_frac 0.85
+# .env -> LOCAL_LLM_BASE_URL=http://localhost:30000/v1   (note port 30000)
+```
+
+Common knobs (both): `TP=2` for multi-GPU, `MAX_LEN=8192` if you OOM on 24 GB. Both scripts auto-detect
+a `noexec` `/tmp` and redirect Triton/compile caches, and set `PYTHONNOUSERSITE=1`. 3090 is Ampere
+(sm_86), fully supported by both — no B200-style rebuild. Qwen3 runs in non-thinking mode by default
+(our client sends `enable_thinking=false`; add `--reasoning-parser qwen3` to serve thinking mode).
 
 ## 3. Bring up the rest
 

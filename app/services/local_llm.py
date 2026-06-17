@@ -1,11 +1,11 @@
 """Local LLM client for the medical-rag tools.
 
-Talks to a local OpenAI-compatible server (vLLM serving ``Qwen/Qwen3-8B``) at
-``LOCAL_LLM_BASE_URL``. No OpenAI API is used anywhere in the RAG pipeline.
+Talks to a local OpenAI-compatible server (vLLM or SGLang serving ``Qwen/Qwen3-8B``)
+at ``LOCAL_LLM_BASE_URL``. No OpenAI API is used anywhere in the RAG pipeline.
 
 Env:
-- ``LOCAL_LLM_BASE_URL``      default ``http://localhost:8000/v1``
-- ``LOCAL_LLM_MODEL``         default ``qwen3-8b`` (the vLLM ``--served-model-name``)
+- ``LOCAL_LLM_BASE_URL``      default ``http://localhost:8000/v1`` (SGLang: ``:30000/v1``)
+- ``LOCAL_LLM_MODEL``         default ``qwen3-8b`` (the server's ``--served-model-name``)
 - ``LOCAL_LLM_THINKING``      default ``false`` (Qwen3 thinking mode toggle)
 - ``LOCAL_LLM_TIMEOUT_SECONDS`` default ``120``
 """
@@ -20,7 +20,7 @@ from typing import Any
 
 
 class LocalLLMUnavailable(RuntimeError):
-    """Raised when the local vLLM endpoint cannot be reached or returns garbage.
+    """Raised when the local LLM endpoint cannot be reached or returns garbage.
 
     Callers should catch this and fall back to a deterministic extractive answer
     so the demo stays robust when no GPU/server is running.
@@ -70,7 +70,7 @@ def chat(
         "stream": False,
     }
     if not _thinking_enabled():
-        # vLLM forwards chat_template_kwargs into the Qwen3 chat template.
+        # vLLM and SGLang both forward chat_template_kwargs into the Qwen3 chat template.
         body["chat_template_kwargs"] = {"enable_thinking": False}
 
     request = urllib.request.Request(
