@@ -57,6 +57,13 @@ echo "[serve] host=$(hostname) model=$MODEL_ID served-as=$SERVED_NAME port=$PORT
 "$PYBIN" -c "import torch; print('[serve] CUDA', torch.version.cuda, '| GPUs', torch.cuda.device_count(), '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NO CUDA')"
 echo "[serve] -> set LOCAL_LLM_BASE_URL=http://$(hostname):$PORT/v1 in .env"
 
+# vLLM bundles prometheus-fastapi-instrumentator, which calls route.path and raises
+# on Starlette's newer _IncludedRouter — crashing every request with a 500. Guard it.
+ROUTING_PY="$("$PYBIN" -c 'import prometheus_fastapi_instrumentator.routing as m; print(m.__file__)' 2>/dev/null || true)"
+if [ -n "$ROUTING_PY" ] && [ -f "$ROUTING_PY" ]; then
+    sed -i 's/route_name = route\.path/route_name = getattr(route, "path", "") or ""/g' "$ROUTING_PY"
+fi
+
 exec "$PYBIN" -m vllm.entrypoints.openai.api_server \
     --model "$MODEL_ID" \
     --served-model-name "$SERVED_NAME" \
