@@ -18,13 +18,26 @@ The model server can run on the **same** box or a **different** one — the back
 
 ## 1. Environment (once)
 
+`environment.yml` is **self-contained** — it installs the base ChatClinic stack **and** the medical-rag
+tools (sentence-transformers, faiss-cpu, pypdf, mcp) in one shot. No separate `requirements-rag.txt`
+step is needed on the conda path.
+
 ```bash
 git clone <repo> && cd chatclinic-multimodal
-conda env create -f environment.yml      # python 3.10, torch 2.5.1+cu121, vllm 0.18.1 — built for Ampere/3090
+conda env create -f environment.yml      # base + medical-rag deps; python 3.10, torch 2.5.1+cu121, vllm 0.18.1 (Ampere/3090)
 conda activate chatclinic
-pip install -r requirements-rag.txt       # sentence-transformers, faiss-cpu, pypdf, mcp
 cp .env.example .env
 ```
+
+**venv path (no conda):** `requirements.txt` also pulls in the RAG deps via `-r`, so one install covers all:
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -U pip && pip install -r requirements.txt        # base + medical-rag in one command
+```
+
+> Tip: if a freshly created env is missing packages that exist in `~/.local`, conda/pip may have skipped
+> them during creation. Run with `PYTHONNOUSERSITE=1` (the serve/run scripts set this automatically) so
+> only the env's pinned deps load.
 
 Edit `.env`:
 ```
