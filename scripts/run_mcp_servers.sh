@@ -8,7 +8,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PY="${PY:-.venv/bin/python}"
+# Use $PY if set, else a repo-local .venv if present, else the active env's python (conda).
+if [ -z "${PY:-}" ]; then
+    if [ -x ".venv/bin/python" ]; then PY=".venv/bin/python"; else PY="python"; fi
+fi
 mkdir -p logs
 
 if [ "${1:-start}" = "stop" ]; then

@@ -16,7 +16,7 @@ cd "$(dirname "$0")/.."
 # Ignore ~/.local user-site packages so the active env's pinned deps win.
 export PYTHONNOUSERSITE=1
 
-PY="${PY:-python}"
+export PY="${PY:-python}"   # exported so scripts/run_mcp_servers.sh inherits the same interpreter
 BACKEND_PORT="${BACKEND_PORT:-8001}"
 PIDFILE=".run_all.pids"
 mkdir -p logs
