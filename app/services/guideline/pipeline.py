@@ -86,12 +86,15 @@ def build_guideline_index(
     idir = Path(index_dir) if index_dir else config.index_dir()
     model_name = embed_model or config.embed_model_name()
 
+    embedder._log(f"building index from {cdir} (embedder={model_name})")
     docs = corpus_mod.load_documents(cdir)
     if not docs:
         raise FileNotFoundError(f"No guideline documents found under {cdir}")
     chunks = corpus_mod.chunk_documents(docs, chunk_size=chunk_size, overlap=overlap)
-    vectors = embedder.embed_texts([c.text for c in chunks], model_name)
+    embedder._log(f"loaded {len(docs)} docs -> {len(chunks)} chunks")
+    vectors = embedder.embed_texts([c.text for c in chunks], model_name, progress=True)
     meta = store.build_index(idir, chunks, vectors, model_name)
+    embedder._log(f"index written to {idir} (dim {meta['dim']}, {len(chunks)} chunks)")
 
     return {
         "index_dir": str(idir),
