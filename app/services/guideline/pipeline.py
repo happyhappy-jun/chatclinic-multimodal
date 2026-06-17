@@ -356,7 +356,9 @@ def run_guideline_rag(
     external_evidence: bool = False,
     external_max: int = 3,
 ) -> dict[str, Any]:
-    passages = retrieve_passages(question, top_k=top_k, min_score=min_score, index_dir=index_dir)
+    # Enforce a hard cosine floor: never feed weak/irrelevant passages to the model.
+    effective_min = max(min_score, config.min_score_floor())
+    passages = retrieve_passages(question, top_k=top_k, min_score=effective_min, index_dir=index_dir)
 
     # Federation: optionally pull evidence from external MCP servers (server-to-server)
     # and merge it in, continuing the REF numbering after the local passages.
@@ -364,7 +366,10 @@ def run_guideline_rag(
         try:
             from app.services.mcp_gateway import search_external_evidence
 
-            external = search_external_evidence(question, max_results=external_max)
+            external = [
+                p for p in search_external_evidence(question, max_results=external_max)
+                if float(p.get("score", 0.0)) >= effective_min
+            ]
         except Exception:  # noqa: BLE001 - external evidence is best-effort
             external = []
         for offset, passage in enumerate(external):

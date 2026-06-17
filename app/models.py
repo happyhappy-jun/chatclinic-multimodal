@@ -988,7 +988,7 @@ class CitationCheckResponse(BaseModel):
 class GuidelineRagRequest(BaseModel):
     question: str = Field(..., description="Clinical question to answer")
     top_k: int = Field(default=6, description="Number of passages to retrieve")
-    min_score: float = Field(default=0.2, description="Minimum cosine similarity to keep a passage")
+    min_score: float = Field(default=0.5, description="Minimum cosine similarity to feed a passage to the model (hard-floored by RAG_MIN_SCORE)")
     source_context: Optional[str] = Field(default=None, description="Optional context from an uploaded source")
     index_dir: Optional[str] = Field(default=None, description="Index directory override")
     verify: bool = Field(default=True, description="Run the citation verifier on the answer")
