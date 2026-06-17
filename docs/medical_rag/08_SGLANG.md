@@ -4,21 +4,23 @@ SGLang is a drop-in alternative to vLLM for the model server. The backend only s
 **OpenAI-compatible `/v1` API**, so switching frameworks changes **nothing in the app** — only
 `LOCAL_LLM_BASE_URL`.
 
-## 1. Install SGLang (pip, in the conda env)
+## 1. Install SGLang (in a SEPARATE env — recommended)
+
+> ⚠️ **Do not `pip install sglang[all]` into the `chatclinic` env.** SGLang pulls a CUDA-13 torch that
+> overwrites the pinned `torch 2.5.1+cu121` and breaks the env (`OSError: libcudart.so.13`), which also
+> breaks vLLM and the sentence-transformers embedder. The backend reaches the model only over HTTP, so
+> the serving framework belongs in its own env.
 
 ```bash
-conda activate chatclinic
+conda create -y -n sglang python=3.10
+conda activate sglang
 pip install "sglang[all]"
-```
-
-Verify it imports:
-```bash
 python -c "import sglang; print('sglang', sglang.__version__)"
 ```
 
-> Note: `sglang[all]` may pull its own torch/flashinfer build via pip. If you want to keep the pinned
-> `vllm==0.18.1` working in the same env, install SGLang in a separate env instead. Since the backend
-> reaches the model only over HTTP, the serving env is independent of the backend.
+(If you already broke `chatclinic`, repair it: `pip uninstall -y sglang sgl-kernel flashinfer-python
+torch torchvision torchaudio && pip install torch==2.5.1 torchvision==0.20.1 --index-url
+https://download.pytorch.org/whl/cu121`.)
 
 ## 2. Serve
 
