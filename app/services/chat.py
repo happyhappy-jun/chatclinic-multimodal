@@ -1667,6 +1667,59 @@ def _execute_analysis_direct_vcf_review(
     )
 
 
+def _read_text_source_content(payload: TextChatRequest, *, max_chars: int = 6000) -> str:
+    """Best-effort full content of an uploaded text note, for RAG grounding."""
+    path = getattr(payload.analysis, "source_text_path", None)
+    if path:
+        try:
+            with open(path, encoding="utf-8", errors="ignore") as handle:
+                return handle.read(max_chars)
+        except OSError:
+            pass
+    lines = getattr(payload.analysis, "preview_lines", None) or []
+    return "\n".join(str(line) for line in lines)[:max_chars]
+
+
+def _execute_text_direct_guideline(
+    payload: TextChatRequest,
+    tool_request: dict[str, object],
+    direct_chat: dict[str, Any],
+    options: dict[str, str],
+) -> TextChatResponse:
+    """`@guideline <question>` on an active text note — answer grounded in the
+    guideline corpus AND the uploaded note (source_context)."""
+    del options
+    from app.services.guideline.pipeline import run_guideline_rag
+
+    question = str(tool_request.get("remainder") or "").strip()
+    if not question or question.lower().startswith("help"):
+        return _basic_source_response(
+            "text",
+            "Usage: `@guideline <clinical question>` — answered from the guideline corpus, grounded in this note.",
+        )
+    source_context = _read_text_source_content(payload)
+    result = run_guideline_rag(question, top_k=6, min_score=0.2, source_context=source_context or None)
+    verifier = result.get("verifier")
+    faith = ""
+    if verifier:
+        faith = f" · faithfulness {round((verifier.get('faithfulness') or 0) * 100)}% ({verifier.get('supported_count')}/{verifier.get('total_claims')})"
+    answer = (
+        f"{result['draft_answer']}\n\n"
+        f"_(grounded in `{payload.analysis.file_name}` + guideline corpus · "
+        f"{'extractive fallback' if result.get('used_fallback') else result.get('model')}{faith})_"
+    )
+    return TextChatResponse(
+        source_type="text",
+        answer=answer,
+        citations=[ref.get("id") for ref in result.get("references", []) if ref.get("id")],
+        used_fallback=bool(result.get("used_fallback")),
+        used_tools=["guideline_rag_tool"],
+        result_kind=str(direct_chat.get("result_kind") or "guideline_rag"),
+        requested_view=str(direct_chat.get("requested_view") or "guideline_rag"),
+        studio={"renderer": "guideline_rag", "data": result},
+    )
+
+
 DIRECT_TOOL_ENDPOINT_EXECUTORS: dict[str, dict[str, Any]] = {
     "vcf": {
         "liftover": _execute_analysis_direct_liftover,
@@ -1683,7 +1736,9 @@ DIRECT_TOOL_ENDPOINT_EXECUTORS: dict[str, dict[str, Any]] = {
     "summary_stats": {
         "qqman": _execute_summary_stats_direct_qqman,
     },
-    "text": {},
+    "text": {
+        "guideline-rag": _execute_text_direct_guideline,
+    },
     "spreadsheet": {},
 }
 

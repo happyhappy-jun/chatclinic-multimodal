@@ -6,12 +6,14 @@
   "modality": "clinical",
   "approval_required": false,
   "source": "plugin",
+  "source_types": ["text", "fhir"],
   "routing": {
     "trigger_keywords": ["guideline", "evidence", "rag", "literature"]
   },
   "direct_chat": {
     "endpoint": "guideline-rag",
     "requested_view": "guideline_rag",
+    "result_kind": "guideline_rag",
     "studio": {"renderer": "guideline_rag"}
   },
   "help": {

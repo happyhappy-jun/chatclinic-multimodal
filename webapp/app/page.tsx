@@ -2069,10 +2069,20 @@ export default function Page() {
         return;
       }
       setStatus(toolRunningStatus(alias, remainder));
+      // Ground in the active text/FHIR source when one is loaded (idiomatic source-scoped use).
+      let sourceContext: string | undefined;
+      let groundedIn = "";
+      if (textAnalysis) {
+        sourceContext = (textAnalysis.preview_lines || []).join("\n").slice(0, 6000);
+        groundedIn = ` · grounded in ${textAnalysis.file_name}`;
+      } else if (fhirAnalysis) {
+        sourceContext = JSON.stringify(fhirAnalysis.patient_summary || {}).slice(0, 6000);
+        groundedIn = ` · grounded in ${fhirAnalysis.file_name}`;
+      }
       const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/guideline-rag/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, top_k: 6, min_score: 0.2 }),
+        body: JSON.stringify({ question, top_k: 6, min_score: 0.2, ...(sourceContext ? { source_context: sourceContext } : {}) }),
       });
       if (!response.ok) throw new Error(await response.text());
       const data = await response.json();
@@ -2081,7 +2091,7 @@ export default function Page() {
       setStatus(toolReadyStatus(alias, remainder));
       const verifier = data.verifier;
       const faith = verifier ? ` · faithfulness ${Math.round((verifier.faithfulness ?? 0) * 100)}% (${verifier.supported_count}/${verifier.total_claims})` : "";
-      addMessage({ role: "assistant", content: `${data.draft_answer}\n\n_(${data.used_fallback ? "extractive fallback" : data.model}${faith}) — see the Guideline RAG card in Studio._` });
+      addMessage({ role: "assistant", content: `${data.draft_answer}\n\n_(${data.used_fallback ? "extractive fallback" : data.model}${faith}${groundedIn}) — see the Guideline RAG card in Studio._` });
       return;
     }
 
