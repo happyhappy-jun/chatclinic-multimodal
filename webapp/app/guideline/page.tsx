@@ -16,6 +16,7 @@ export default function GuidelineRagPage() {
   const [apiBase, setApiBase] = useState("http://127.0.0.1:8001");
   const [question, setQuestion] = useState(EXAMPLES[0]);
   const [topK, setTopK] = useState(4);
+  const [externalEvidence, setExternalEvidence] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GuidelineRagResult | null>(null);
@@ -71,7 +72,7 @@ export default function GuidelineRagPage() {
       const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/guideline-rag/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed, top_k: topK, min_score: 0.15 }),
+        body: JSON.stringify({ question: trimmed, top_k: topK, min_score: 0.15, external_evidence: externalEvidence }),
       });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -264,6 +265,14 @@ export default function GuidelineRagPage() {
               onChange={(e) => setTopK(Number(e.target.value) || 4)}
               style={{ width: 52, padding: "4px 6px", border: "1px solid #cbd5e1", borderRadius: 6 }}
             />
+          </label>
+          <label style={{ fontSize: 13, color: "#334155", display: "flex", alignItems: "center", gap: 5 }} title="Also fetch & merge live PubMed abstracts via the MCP gateway">
+            <input
+              type="checkbox"
+              checked={externalEvidence}
+              onChange={(e) => setExternalEvidence(e.target.checked)}
+            />
+            live PubMed
           </label>
           <label style={{ fontSize: 13, color: "#64748b", flex: 1, minWidth: 220 }}>
             API{" "}
