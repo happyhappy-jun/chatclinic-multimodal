@@ -3045,11 +3045,17 @@ export default function Page() {
       return;
     }
 
-    if (!hasAttachedSource) {
+    // Source-less tools (clinical guideline RAG) may be used with no upload.
+    const sourcelessToolMatch = text.match(/^@([A-Za-z0-9_-]+)/);
+    const isSourcelessTool =
+      sourcelessToolMatch != null &&
+      ["guideline", "guideline_rag", "guideline_rag_tool", "rag"].includes(sourcelessToolMatch[1].toLowerCase());
+
+    if (!hasAttachedSource && !isSourcelessTool) {
       addMessage({ role: "user", content: text });
       addMessage({
         role: "assistant",
-        content: "먼저 분석할 소스 파일을 업로드해 주세요. VCF, FASTQ, BAM, DICOM, Excel, TSV, TXT 등 지원됩니다.",
+        content: "먼저 분석할 소스 파일을 업로드해 주세요. VCF, FASTQ, BAM, DICOM, Excel, TSV, TXT 등 지원됩니다. (임상 가이드라인 질문은 `@guideline <질문>` 으로 소스 없이 사용할 수 있습니다.)",
       });
       setComposerText("");
       return;
