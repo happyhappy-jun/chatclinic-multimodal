@@ -15,6 +15,7 @@ This folder is the team's planning + design space. Read in order:
 7. **[06_EVAL.md](06_EVAL.md)** — PubMedQA (RAG lift + faithfulness) and MIRAGE results.
 8. **[07_DEPLOY.md](07_DEPLOY.md)** — run on another GPU box (e.g. RTX 3090): no-SLURM serve + `run_all.sh`.
 9. **[08_SGLANG.md](08_SGLANG.md)** — serve Qwen3-8B with SGLang instead of vLLM (pip install in the conda env).
+10. **[09_DEMO_SCENARIO.md](09_DEMO_SCENARIO.md)** — ~10-min live demo script (before/after + step-by-step prompts).
 
 ## TL;DR
 
