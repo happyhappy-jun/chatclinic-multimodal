@@ -2101,6 +2101,45 @@ export default function Page() {
       return;
     }
 
+    // Source-less MCP federation: list or call tools on external MCP servers.
+    if (alias === "mcp" || alias === "federation") {
+      const parts = remainder.trim().split(/\s+/).filter(Boolean);
+      const sub = (parts[0] || "list").toLowerCase();
+      setStatus(toolRunningStatus(alias, remainder));
+      if (sub === "call") {
+        const server = parts[1];
+        const tool = parts[2];
+        if (!server || !tool) {
+          addMessage({ role: "assistant", content: "Usage: `@mcp call <server> <tool> [key=value ...]` — e.g. `@mcp call pubmed search_literature query=septic shock`" });
+          return;
+        }
+        const args: Record<string, string> = {};
+        for (const kv of parts.slice(3)) {
+          const i = kv.indexOf("=");
+          if (i > 0) args[kv.slice(0, i)] = kv.slice(i + 1);
+        }
+        const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/mcp/call`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ server, tool, arguments: args }),
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        const body = JSON.stringify(data.json ?? data.text ?? data, null, 2).slice(0, 1800);
+        addMessage({ role: "assistant", content: `\`@mcp call ${server}.${tool}\` → ${data.is_error ? "error" : "ok"}\n\n\`\`\`json\n${body}\n\`\`\`` });
+        setStatus(toolReadyStatus(alias, remainder));
+        return;
+      }
+      const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/mcp/tools`, { method: "POST" });
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      const lines = (data.tools || []).map((t: any) => `- **${t.server}** · \`${t.name}\` — ${t.description || ""}`).join("\n");
+      const errs = (data.errors || []).length ? `\n\n_unreachable: ${(data.errors || []).map((e: any) => e.server).join(", ")}_` : "";
+      addMessage({ role: "assistant", content: `Federated MCP servers: ${(data.servers || []).join(", ") || "none"}\n\n${lines || "No tools discovered."}${errs}\n\n_Call one with_ \`@mcp call <server> <tool> key=value\`` });
+      setStatus(toolReadyStatus(alias, remainder));
+      return;
+    }
+
     const preAnalysisSource =
       sessionMode === "prs"
         ? alias === "plink" && (remainder.trim().toLowerCase() === "score" || parseInlineOptions(remainder).mode?.toLowerCase() === "score")
@@ -3049,7 +3088,7 @@ export default function Page() {
     const sourcelessToolMatch = text.match(/^@([A-Za-z0-9_-]+)/);
     const isSourcelessTool =
       sourcelessToolMatch != null &&
-      ["guideline", "guideline_rag", "guideline_rag_tool", "rag"].includes(sourcelessToolMatch[1].toLowerCase());
+      ["guideline", "guideline_rag", "guideline_rag_tool", "rag", "mcp", "federation"].includes(sourcelessToolMatch[1].toLowerCase());
 
     if (!hasAttachedSource && !isSourcelessTool) {
       addMessage({ role: "user", content: text });

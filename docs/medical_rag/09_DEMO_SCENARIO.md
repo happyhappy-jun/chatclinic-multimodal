@@ -102,12 +102,11 @@ upload a guideline PDF/markdown. Watch it re-index, then ask a question only tha
 ```
 @mcp
 ```
-➡️ Lists tools exposed by federated MCP servers. Then (CLI, to show agent2agent):
-```bash
-curl -s -X POST localhost:8001/api/v1/mcp/call -H 'Content-Type: application/json' \
-  -d '{"server":"pubmed","tool":"search_literature","arguments":{"query":"septic shock norepinephrine","max_results":3}}'
+➡️ Lists tools exposed by federated MCP servers (`pubmed`, `pubmed-lite`). Then call one from chat:
 ```
-➡️ Real PubMed results returned through the gateway.
+@mcp call pubmed search_literature query=septic shock norepinephrine
+```
+➡️ Real PubMed results (PMIDs) returned through the gateway. (Same as `POST /api/v1/mcp/call`.)
 
 > **Say:** "ChatClinic is now both an MCP client *and* server — our RAG tools are callable by any external
 > agent. This is the agentic/MCP piece of the course."
