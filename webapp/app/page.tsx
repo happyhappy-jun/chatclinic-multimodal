@@ -2063,9 +2063,14 @@ export default function Page() {
   async function runPreAnalysisTool(alias: string, remainder: string) {
     // Source-less clinical guideline RAG: works with no uploaded source.
     if (alias === "guideline" || alias === "guideline_rag" || alias === "guideline_rag_tool" || alias === "rag") {
-      const question = remainder.trim();
+      // `+pubmed` / `+external` / `external_evidence=true` enables live PubMed federation.
+      const externalEvidence = /(^|\s)\+(pubmed|external)(\s|$)/i.test(remainder) || /external_evidence\s*=\s*true/i.test(remainder);
+      const question = remainder
+        .replace(/(^|\s)\+(pubmed|external)(\s|$)/gi, " ")
+        .replace(/external_evidence\s*=\s*(true|false)/gi, " ")
+        .trim();
       if (!question) {
-        addMessage({ role: "assistant", content: "Usage: `@guideline <clinical question>` — e.g. `@guideline first-line antibiotics for outpatient pneumonia`" });
+        addMessage({ role: "assistant", content: "Usage: `@guideline <clinical question>` — add `+pubmed` to also search live PubMed. e.g. `@guideline +pubmed vasopressor choice in septic shock`" });
         return;
       }
       setStatus(toolRunningStatus(alias, remainder));
@@ -2082,7 +2087,7 @@ export default function Page() {
       const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/guideline-rag/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, top_k: 6, min_score: 0.2, ...(sourceContext ? { source_context: sourceContext } : {}) }),
+        body: JSON.stringify({ question, top_k: 6, min_score: 0.2, external_evidence: externalEvidence, ...(sourceContext ? { source_context: sourceContext } : {}) }),
       });
       if (!response.ok) throw new Error(await response.text());
       const data = await response.json();
@@ -2091,7 +2096,8 @@ export default function Page() {
       setStatus(toolReadyStatus(alias, remainder));
       const verifier = data.verifier;
       const faith = verifier ? ` · faithfulness ${Math.round((verifier.faithfulness ?? 0) * 100)}% (${verifier.supported_count}/${verifier.total_claims})` : "";
-      addMessage({ role: "assistant", content: `${data.draft_answer}\n\n_(${data.used_fallback ? "extractive fallback" : data.model}${faith}${groundedIn}) — see the Guideline RAG card in Studio._` });
+      const ext = externalEvidence ? " · +live PubMed" : "";
+      addMessage({ role: "assistant", content: `${data.draft_answer}\n\n_(${data.used_fallback ? "extractive fallback" : data.model}${faith}${groundedIn}${ext}) — see the Guideline RAG card in Studio._` });
       return;
     }
 

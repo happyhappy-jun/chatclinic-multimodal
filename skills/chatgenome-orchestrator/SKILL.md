@@ -50,7 +50,7 @@ Upload a source file to get started. Supported formats: DICOM images, PNG/JPG/TI
 - Auto: Summary Stats Review (column detection, schema mapping)
 
 **Clinical Guideline / Literature RAG**
-- `@guideline <clinical question>` — Evidence-grounded answer retrieved from the guideline corpus with inline `[REF#]` citations (local Qwen3-8B); add `external_evidence=true` to also pull federated MCP evidence. Works standalone (no source) or, when a **text note / FHIR bundle** is the active source, grounds the answer in that source too (`source_types: text, fhir`).
+- `@guideline <clinical question>` — Evidence-grounded answer retrieved from the guideline corpus with inline `[REF#]` citations (local Qwen3-8B); add **`+pubmed`** (or `external_evidence=true`) to also fetch & merge live PubMed evidence via the MCP gateway. Works standalone (no source) or, when a **text note / FHIR bundle** is the active source, grounds the answer in that source too (`source_types: text, fhir`).
 - `@guideline_index` — (Re)build the FAISS retrieval index from the guideline corpus
 - `@citation_check` — Verify that each cited claim in a grounded answer is supported by its passage (faithfulness guard)
 - `@mcp [action=list|call]` — Discover or call tools on federated external MCP servers (server-to-server / agent2agent)
