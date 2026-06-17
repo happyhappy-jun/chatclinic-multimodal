@@ -38,6 +38,10 @@ npm run dev:webapp            # http://localhost:3000
 ```
 Open **http://localhost:3000/guideline**, click an example question or type your own.
 
+**Add documents to the corpus from the browser:** the `/guideline` page has an *"Add to corpus"*
+file picker — upload a `.md` / `.txt` / `.pdf`; it saves into the corpus dir and rebuilds the FAISS
+index in one step (`POST /api/v1/guideline/upload`). The new doc is immediately retrievable.
+
 ## What you'll see
 - The grounded answer with inline **[REF#]** citation chips.
 - A **faithfulness %** badge + per-claim ✓/✕ from the citation verifier.

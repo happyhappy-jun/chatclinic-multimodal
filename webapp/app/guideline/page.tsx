@@ -17,6 +17,31 @@ export default function GuidelineRagPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GuidelineRagResult | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [indexInfo, setIndexInfo] = useState<string | null>(null);
+
+  async function uploadDoc(file: File) {
+    setUploading(true);
+    setError(null);
+    setIndexInfo(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/guideline/upload`, {
+        method: "POST",
+        body: form,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+      const data = await response.json();
+      setIndexInfo(`Added "${data.uploaded}" — corpus now ${data.n_docs} docs / ${data.n_chunks} chunks (${data.embed_model}).`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function run(q: string) {
     const trimmed = q.trim();
@@ -78,6 +103,39 @@ export default function GuidelineRagPage() {
             {ex.length > 52 ? ex.slice(0, 52) + "…" : ex}
           </button>
         ))}
+      </div>
+
+      <div
+        style={{
+          border: "1px dashed #cbd5e1",
+          borderRadius: 8,
+          padding: "10px 12px",
+          margin: "0 0 16px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          background: "#f8fafc",
+        }}
+      >
+        <span style={{ fontSize: 13, color: "#334155", fontWeight: 600 }}>Add to corpus:</span>
+        <input
+          type="file"
+          accept=".md,.markdown,.txt,.text,.pdf"
+          disabled={uploading}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadDoc(f);
+            e.currentTarget.value = "";
+          }}
+          style={{ fontSize: 13 }}
+        />
+        <span style={{ fontSize: 12, color: "#64748b" }}>
+          {uploading ? "indexing…" : ".md / .txt / .pdf — rebuilds the FAISS index"}
+        </span>
+        {indexInfo ? (
+          <span style={{ fontSize: 12, color: "#15803d", flexBasis: "100%" }}>✓ {indexInfo}</span>
+        ) : null}
       </div>
 
       <form

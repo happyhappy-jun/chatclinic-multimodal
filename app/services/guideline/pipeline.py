@@ -21,6 +21,31 @@ from app.services.local_llm import LocalLLMUnavailable, chat
 # Index build
 # --------------------------------------------------------------------------- #
 
+ALLOWED_UPLOAD_SUFFIXES = {".md", ".markdown", ".txt", ".text", ".pdf"}
+
+
+def ingest_guideline_document(filename: str, data: bytes, *, rebuild: bool = True) -> dict[str, Any]:
+    """Save an uploaded document into the corpus dir and (re)build the index."""
+    from pathlib import Path as _Path
+
+    safe_name = os.path.basename(filename or "").strip() or "document.md"
+    suffix = _Path(safe_name).suffix.lower()
+    if suffix not in ALLOWED_UPLOAD_SUFFIXES:
+        raise ValueError(
+            f"Unsupported file type '{suffix}'. Allowed: {', '.join(sorted(ALLOWED_UPLOAD_SUFFIXES))}"
+        )
+    cdir = config.corpus_dir()
+    cdir.mkdir(parents=True, exist_ok=True)
+    dest = cdir / safe_name
+    dest.write_bytes(data)
+
+    if not rebuild:
+        return {"uploaded": safe_name, "corpus_dir": str(cdir)}
+    result = build_guideline_index()
+    result["uploaded"] = safe_name
+    return result
+
+
 def build_guideline_index(
     *,
     corpus_dir: str | None = None,

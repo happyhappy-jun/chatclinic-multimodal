@@ -714,6 +714,21 @@ def build_guideline_index_endpoint(request: GuidelineIndexRequest) -> GuidelineI
     return _run_registered_tool_model("guideline_index_tool", request.model_dump(), GuidelineIndexResponse)
 
 
+@app.post("/api/v1/guideline/upload", response_model=GuidelineIndexResponse)
+async def upload_guideline_document(file: UploadFile = File(...)) -> GuidelineIndexResponse:
+    """Ingest a guideline document (.md/.txt/.pdf) into the corpus and rebuild the index."""
+    from app.services.guideline.pipeline import ingest_guideline_document
+
+    data = await file.read()
+    try:
+        result = ingest_guideline_document(file.filename or "document.md", data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Index rebuild failed: {exc}") from exc
+    return GuidelineIndexResponse(**result)
+
+
 @app.post("/api/v1/guideline-rag/run", response_model=GuidelineRagResponse)
 def run_guideline_rag_endpoint(request: GuidelineRagRequest) -> GuidelineRagResponse:
     return _run_registered_tool_model("guideline_rag_tool", request.model_dump(), GuidelineRagResponse)

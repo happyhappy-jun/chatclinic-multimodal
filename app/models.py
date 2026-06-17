@@ -936,6 +936,7 @@ class GuidelineIndexResponse(BaseModel):
     dim: int
     documents: list[str] = []
     draft_answer: str = ""
+    uploaded: Optional[str] = None
 
 
 class RetrievedPassage(BaseModel):
