@@ -1288,6 +1288,7 @@ export default function Page() {
   const [dicomAnalysis, setDicomAnalysis] = useState<DicomSourceResponse | null>(null);
   const [spreadsheetAnalysis, setSpreadsheetAnalysis] = useState<SpreadsheetSourceResponse | null>(null);
   const [textAnalysis, setTextAnalysis] = useState<TextSourceResponse | null>(null);
+  const [guidelineRagResult, setGuidelineRagResult] = useState<any>(null);
   const [imageAnalysis, setImageAnalysis] = useState<ImageSourceResponse | null>(null);
   const [niftiAnalysis, setNiftiAnalysis] = useState<any>(null);
   const [fhirAnalysis, setFhirAnalysis] = useState<FhirSourceResponse | null>(null);
@@ -2060,6 +2061,30 @@ export default function Page() {
   }
 
   async function runPreAnalysisTool(alias: string, remainder: string) {
+    // Source-less clinical guideline RAG: works with no uploaded source.
+    if (alias === "guideline" || alias === "guideline_rag" || alias === "guideline_rag_tool" || alias === "rag") {
+      const question = remainder.trim();
+      if (!question) {
+        addMessage({ role: "assistant", content: "Usage: `@guideline <clinical question>` — e.g. `@guideline first-line antibiotics for outpatient pneumonia`" });
+        return;
+      }
+      setStatus(toolRunningStatus(alias, remainder));
+      const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/guideline-rag/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, top_k: 6, min_score: 0.2 }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      setGuidelineRagResult(data);
+      activateStudioFromPayload({ studio: { renderer: "guideline_rag" }, requested_view: "guideline_rag" }, undefined, undefined);
+      setStatus(toolReadyStatus(alias, remainder));
+      const verifier = data.verifier;
+      const faith = verifier ? ` · faithfulness ${Math.round((verifier.faithfulness ?? 0) * 100)}% (${verifier.supported_count}/${verifier.total_claims})` : "";
+      addMessage({ role: "assistant", content: `${data.draft_answer}\n\n_(${data.used_fallback ? "extractive fallback" : data.model}${faith}) — see the Guideline RAG card in Studio._` });
+      return;
+    }
+
     const preAnalysisSource =
       sessionMode === "prs"
         ? alias === "plink" && (remainder.trim().toLowerCase() === "score" || parseInlineOptions(remainder).mode?.toLowerCase() === "score")
@@ -4259,6 +4284,7 @@ export default function Page() {
       spreadsheetAnalysis ||
       dicomAnalysis ||
       textAnalysis ||
+      guidelineRagResult ||
       imageAnalysis ||
       niftiAnalysis ||
       fhirAnalysis ||
@@ -4451,6 +4477,7 @@ export default function Page() {
     dicomAnalysis,
     spreadsheetAnalysis,
     textAnalysis,
+    guidelineRagResult,
     imageAnalysis,
     niftiAnalysis,
     fhirAnalysis,
