@@ -11,9 +11,8 @@
 #   LOCAL_LLM_BASE_URL=http://<this-host>:$PORT/v1
 #   LOCAL_LLM_MODEL=$SERVED_NAME
 #
-# Install (recommended: an ISOLATED venv so SGLang's torch/flashinfer pins don't
-# clash with the pinned vllm/torch in the chatclinic env):
-#   python -m venv .sglang-runtime/venv && . .sglang-runtime/venv/bin/activate
+# Install (pip, inside the conda env — see docs/medical_rag/08_SGLANG.md):
+#   conda activate chatclinic
 #   pip install "sglang[all]"
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -44,16 +43,13 @@ if findmnt -no OPTIONS --target /tmp 2>/dev/null | grep -q noexec; then
     mkdir -p "$TMPDIR" "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$XDG_CACHE_HOME"
 fi
 
-# Pick a python that has sglang: active env first, else the isolated venv.
+# Pick a python that has sglang (the active conda env).
 PYBIN="${PYBIN:-python}"
 if ! "$PYBIN" -c "import sglang" 2>/dev/null; then
-    if [ -x "$DATA_ROOT/venv/bin/python" ] && "$DATA_ROOT/venv/bin/python" -c "import sglang" 2>/dev/null; then
-        PYBIN="$DATA_ROOT/venv/bin/python"
-    else
-        echo "[serve] ERROR: no 'sglang' in '$PYBIN'. Install it (isolated venv recommended):" >&2
-        echo "        python -m venv $DATA_ROOT/venv && $DATA_ROOT/venv/bin/pip install 'sglang[all]'" >&2
-        exit 1
-    fi
+    echo "[serve] ERROR: no 'sglang' in '$PYBIN'. Install it into the conda env:" >&2
+    echo "        conda activate chatclinic && pip install 'sglang[all]'" >&2
+    echo "        (see docs/medical_rag/08_SGLANG.md)" >&2
+    exit 1
 fi
 
 echo "[serve] host=$(hostname) model=$MODEL_ID served-as=$SERVED_NAME port=$PORT TP=$TP max_len=$MAX_LEN"

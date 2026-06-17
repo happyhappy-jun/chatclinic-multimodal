@@ -60,10 +60,9 @@ bash scripts/serve_qwen3_local.sh
 # .env -> LOCAL_LLM_BASE_URL=http://localhost:8000/v1
 ```
 
-**Option B — SGLang** (install in an isolated venv to avoid clashing with the pinned torch/vllm):
+**Option B — SGLang** (pip-install into the conda env; full guide in [08_SGLANG.md](08_SGLANG.md)):
 ```bash
-python -m venv .sglang-runtime/venv && . .sglang-runtime/venv/bin/activate
-pip install "sglang[all]"
+conda activate chatclinic && pip install "sglang[all]"
 bash scripts/serve_qwen3_sglang.sh
 # defaults: Qwen/Qwen3-8B, port 30000, TP=1, max_len 12288, mem_frac 0.85
 # .env -> LOCAL_LLM_BASE_URL=http://localhost:30000/v1   (note port 30000)
