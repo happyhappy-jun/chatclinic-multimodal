@@ -14,7 +14,7 @@ overlap), embeds chunks with a local SentenceTransformer, and writes `faiss.inde
 
 ## Defaults
 - Corpus: `examples/guidelines/` · Index: `data/guideline_index/`
-- Embedding model: `EMBED_MODEL` env (default `BAAI/bge-m3`; a small model like
+- Embedding model: `EMBED_MODEL` env (default `NeuML/pubmedbert-base-embeddings`; a small model like
   `sentence-transformers/all-MiniLM-L6-v2` works for fast local tests).
 
 Run this once before any `guideline_rag_tool` query, and again whenever the corpus changes.

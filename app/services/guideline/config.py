@@ -17,6 +17,7 @@ def index_dir() -> Path:
 
 
 def embed_model_name() -> str:
-    # Production default is a biomedical-capable multilingual retriever; can be
-    # overridden to a small model (e.g. all-MiniLM-L6-v2) for fast local tests.
-    return os.getenv("EMBED_MODEL", "BAAI/bge-m3")
+    # Default is a biomedical sentence embedder (PubMedBERT, 768-dim) — domain-matched
+    # for clinical text and light enough to embed quickly. Override via EMBED_MODEL
+    # (e.g. all-MiniLM-L6-v2 for fastest local tests, or BAAI/bge-m3 for multilingual).
+    return os.getenv("EMBED_MODEL", "NeuML/pubmedbert-base-embeddings")
