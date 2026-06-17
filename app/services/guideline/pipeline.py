@@ -24,6 +24,34 @@ from app.services.local_llm import LocalLLMUnavailable, chat
 ALLOWED_UPLOAD_SUFFIXES = {".md", ".markdown", ".txt", ".text", ".pdf"}
 
 
+def list_corpus_documents(index_dir: str | None = None) -> dict[str, Any]:
+    """List the documents currently in the FAISS index, grouped by source doc."""
+    idir = Path(index_dir) if index_dir else config.index_dir()
+    chunks = store.load_chunks(idir)
+    meta = store.load_meta(idir)
+    by_doc: dict[str, dict[str, Any]] = {}
+    for chunk in chunks:
+        doc_id = chunk.get("doc_id") or str(chunk.get("chunk_id", "")).split("::")[0]
+        entry = by_doc.setdefault(
+            doc_id,
+            {
+                "doc_id": doc_id,
+                "title": chunk.get("title", "") or doc_id,
+                "source": chunk.get("source", "") or "",
+                "url": chunk.get("url"),
+                "n_chunks": 0,
+            },
+        )
+        entry["n_chunks"] += 1
+    documents = sorted(by_doc.values(), key=lambda d: str(d["title"]).lower())
+    return {
+        "embed_model": meta.get("embed_model", "") or config.embed_model_name(),
+        "n_docs": len(documents),
+        "n_chunks": len(chunks),
+        "documents": documents,
+    }
+
+
 def ingest_guideline_document(filename: str, data: bytes, *, rebuild: bool = True) -> dict[str, Any]:
     """Save an uploaded document into the corpus dir and (re)build the index."""
     from pathlib import Path as _Path

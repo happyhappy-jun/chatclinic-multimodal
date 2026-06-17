@@ -939,6 +939,21 @@ class GuidelineIndexResponse(BaseModel):
     uploaded: Optional[str] = None
 
 
+class CorpusDoc(BaseModel):
+    doc_id: str
+    title: str
+    source: str = ""
+    url: Optional[str] = None
+    n_chunks: int = 0
+
+
+class CorpusListResponse(BaseModel):
+    embed_model: str = ""
+    n_docs: int = 0
+    n_chunks: int = 0
+    documents: list[CorpusDoc] = []
+
+
 class RetrievedPassage(BaseModel):
     ref_id: str
     doc_title: str

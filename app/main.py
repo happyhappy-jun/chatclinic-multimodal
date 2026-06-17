@@ -99,6 +99,7 @@ from app.services.source_registry import (
 from app.models import (
     CitationCheckRequest,
     CitationCheckResponse,
+    CorpusListResponse,
     GuidelineIndexRequest,
     GuidelineIndexResponse,
     GuidelineRagRequest,
@@ -712,6 +713,14 @@ def run_ldblockshow_plot(request: LDBlockShowRequest) -> LDBlockShowResponse:
 @app.post("/api/v1/guideline/index", response_model=GuidelineIndexResponse)
 def build_guideline_index_endpoint(request: GuidelineIndexRequest) -> GuidelineIndexResponse:
     return _run_registered_tool_model("guideline_index_tool", request.model_dump(), GuidelineIndexResponse)
+
+
+@app.get("/api/v1/guideline/docs", response_model=CorpusListResponse)
+def list_guideline_docs_endpoint() -> CorpusListResponse:
+    """List the documents currently indexed in the guideline corpus."""
+    from app.services.guideline.pipeline import list_corpus_documents
+
+    return CorpusListResponse(**list_corpus_documents())
 
 
 @app.post("/api/v1/guideline/upload", response_model=GuidelineIndexResponse)

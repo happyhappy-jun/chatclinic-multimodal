@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GuidelineRagCard, type GuidelineRagResult } from "../components/GuidelineRagCard";
+
+type CorpusDoc = { doc_id: string; title: string; source: string; url?: string | null; n_chunks: number };
 
 const EXAMPLES = [
   "First-line antibiotics for a healthy adult outpatient with community-acquired pneumonia?",
@@ -19,6 +21,22 @@ export default function GuidelineRagPage() {
   const [result, setResult] = useState<GuidelineRagResult | null>(null);
   const [uploading, setUploading] = useState(false);
   const [indexInfo, setIndexInfo] = useState<string | null>(null);
+  const [corpus, setCorpus] = useState<{ embed_model: string; n_docs: number; n_chunks: number; documents: CorpusDoc[] } | null>(null);
+  const [showCorpus, setShowCorpus] = useState(true);
+
+  async function loadCorpus() {
+    try {
+      const response = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/guideline/docs`);
+      if (response.ok) setCorpus(await response.json());
+    } catch {
+      /* corpus list is best-effort */
+    }
+  }
+
+  useEffect(() => {
+    loadCorpus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiBase]);
 
   async function uploadDoc(file: File) {
     setUploading(true);
@@ -36,6 +54,7 @@ export default function GuidelineRagPage() {
       }
       const data = await response.json();
       setIndexInfo(`Added "${data.uploaded}" — corpus now ${data.n_docs} docs / ${data.n_chunks} chunks (${data.embed_model}).`);
+      loadCorpus();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -135,6 +154,64 @@ export default function GuidelineRagPage() {
         </span>
         {indexInfo ? (
           <span style={{ fontSize: 12, color: "#15803d", flexBasis: "100%" }}>✓ {indexInfo}</span>
+        ) : null}
+      </div>
+
+      <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => setShowCorpus((s) => !s)}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            background: "#f1f5f9",
+            border: "none",
+            borderRadius: "8px 8px 0 0",
+            padding: "8px 12px",
+            cursor: "pointer",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#334155",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <span>{showCorpus ? "▾" : "▸"} Knowledge base — {corpus?.n_docs ?? 0} documents / {corpus?.n_chunks ?? 0} chunks</span>
+          <span style={{ fontWeight: 400, color: "#64748b" }}>{corpus?.embed_model ?? ""}</span>
+        </button>
+        {showCorpus ? (
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {corpus && corpus.documents.length > 0 ? (
+              corpus.documents.map((doc) => (
+                <div
+                  key={doc.doc_id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    padding: "7px 12px",
+                    borderTop: "1px solid #f1f5f9",
+                    fontSize: 13,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: "#0f172a", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {doc.url ? (
+                        <a href={doc.url} target="_blank" rel="noreferrer" style={{ color: "#1d4ed8" }}>{doc.title}</a>
+                      ) : (
+                        doc.title
+                      )}
+                    </div>
+                    <div style={{ color: "#64748b", fontSize: 12 }}>{doc.source}</div>
+                  </div>
+                  <span style={{ color: "#64748b", fontSize: 12, whiteSpace: "nowrap" }}>{doc.n_chunks} chunks</span>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: "10px 12px", fontSize: 13, color: "#64748b" }}>
+                No documents indexed yet — add one above or run the index tool.
+              </div>
+            )}
+          </div>
         ) : null}
       </div>
 
