@@ -43,14 +43,19 @@ if findmnt -no OPTIONS --target /tmp 2>/dev/null | grep -q noexec; then
     mkdir -p "$TMPDIR" "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$XDG_CACHE_HOME"
 fi
 
-# Pick a python that has sglang (the active conda env).
+# Pick a python that has sglang (the active conda env). Surface the REAL import
+# error — a raised exception here usually means a torch/flashinfer mismatch, not
+# a missing install.
 PYBIN="${PYBIN:-python}"
-if ! "$PYBIN" -c "import sglang" 2>/dev/null; then
-    echo "[serve] ERROR: no 'sglang' in '$PYBIN'. Install it into the conda env:" >&2
-    echo "        conda activate chatclinic && pip install 'sglang[all]'" >&2
-    echo "        (see docs/medical_rag/08_SGLANG.md)" >&2
+if ! SGLANG_VER="$("$PYBIN" -c "import sglang; print(sglang.__version__)" 2>&1)"; then
+    echo "[serve] ERROR: cannot import sglang in '$PYBIN' ($("$PYBIN" -c 'import sys;print(sys.executable)'))" >&2
+    echo "[serve] --- real error ---" >&2
+    echo "$SGLANG_VER" | tail -6 >&2
+    echo "[serve] -----------------" >&2
+    echo "[serve] install/repair:  conda activate chatclinic && pip install 'sglang[all]'  (see docs/medical_rag/08_SGLANG.md)" >&2
     exit 1
 fi
+echo "[serve] sglang $SGLANG_VER"
 
 echo "[serve] host=$(hostname) model=$MODEL_ID served-as=$SERVED_NAME port=$PORT TP=$TP max_len=$MAX_LEN"
 "$PYBIN" -c "import torch; print('[serve] CUDA', torch.version.cuda, '| GPUs', torch.cuda.device_count(), '|', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NO CUDA')"
