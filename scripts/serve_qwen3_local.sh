@@ -12,6 +12,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Ignore ~/.local user-site packages — they can shadow the conda env's pinned
+# torch/triton/pydantic and cause "duplicate template name" / arch-inspect failures.
+export PYTHONNOUSERSITE=1
+
 MODEL_ID="${MODEL_ID:-Qwen/Qwen3-8B}"
 SERVED_NAME="${SERVED_NAME:-qwen3-8b}"
 PORT="${PORT:-8000}"
