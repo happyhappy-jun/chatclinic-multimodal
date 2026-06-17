@@ -11,6 +11,7 @@ This folder is the team's planning + design space. Read in order:
 5. **[04_DEMO.md](04_DEMO.md)** — how to run the full stack (vLLM → backend → `/guideline` page).
 6. **[05_MCP.md](05_MCP.md)** — MCP gateway (server-to-server / agent2agent over Streamable HTTP).
 7. **[06_EVAL.md](06_EVAL.md)** — PubMedQA (RAG lift + faithfulness) and MIRAGE results.
+8. **[07_DEPLOY.md](07_DEPLOY.md)** — run on another GPU box (e.g. RTX 3090): no-SLURM serve + `run_all.sh`.
 
 ## TL;DR
 

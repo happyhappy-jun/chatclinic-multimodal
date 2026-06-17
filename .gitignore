@@ -39,3 +39,7 @@ logs/
 # Eval: keep harness + results.json, ignore downloaded datasets and run logs
 eval/data/
 eval/results/run.log
+
+# run_all runtime
+.run_all.pids
+.vllm-runtime/

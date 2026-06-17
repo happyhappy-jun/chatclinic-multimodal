@@ -1,0 +1,91 @@
+# 07 · Deploy on Another Server (e.g. RTX 3090)
+
+The **application is portable** — every host/path/model is read from env vars; nothing is hardcoded.
+Only the SLURM script (`serve_qwen3_vllm.sbatch`) was cluster-specific. For a plain GPU box use the
+no-SLURM scripts below.
+
+## What runs where
+
+| Component | Port | Process | GPU? |
+|---|---|---|---|
+| vLLM model server (Qwen3-8B) | 8000 | `scripts/serve_qwen3_local.sh` | **yes (1× 24 GB)** |
+| FastAPI backend | 8001 | `uvicorn app.main:app` | no |
+| MCP servers (ours + pubmed + lite) | 9000–9002 | `scripts/run_mcp_servers.sh` | no |
+| Next.js frontend (demo UI) | 3000 | `npm run dev:webapp` | no |
+
+The model server can run on the **same** box or a **different** one — the backend just needs
+`LOCAL_LLM_BASE_URL` pointing at it.
+
+## 1. Environment (once)
+
+```bash
+git clone <repo> && cd chatclinic-multimodal
+conda env create -f environment.yml      # python 3.10, torch 2.5.1+cu121, vllm 0.18.1 — built for Ampere/3090
+conda activate chatclinic
+pip install -r requirements-rag.txt       # sentence-transformers, faiss-cpu, pypdf, mcp
+cp .env.example .env
+```
+
+Edit `.env`:
+```
+LOCAL_LLM_BASE_URL=http://localhost:8000/v1     # or http://<gpu-host>:8000/v1 if remote
+LOCAL_LLM_MODEL=qwen3-8b
+EMBED_MODEL=BAAI/bge-m3                          # production retriever
+PUBMED_EMAIL=you@example.com                     # NCBI etiquette (no key needed)
+# NCBI_API_KEY=...                               # optional, 3->10 req/s
+```
+
+## 2. Serve the model (1× 3090)
+
+```bash
+bash scripts/serve_qwen3_local.sh
+# defaults: Qwen/Qwen3-8B, port 8000, TP=1, max_len 12288, gpu_util 0.92
+# multi-GPU: TP=2 bash scripts/serve_qwen3_local.sh
+# OOM on 24 GB? lower context: MAX_LEN=8192 bash scripts/serve_qwen3_local.sh
+```
+The script auto-detects a `noexec` `/tmp` and redirects Triton/compile caches (a cluster quirk; harmless
+elsewhere). 3090 is Ampere (sm_86) and fully supported by the pinned `cu121` stack — no B200-style rebuild.
+
+## 3. Bring up the rest
+
+```bash
+bash scripts/run_all.sh
+#   builds the FAISS index if missing -> backend(:8001) -> MCP(:9000-9002) -> frontend(:3000)
+#   stop: bash scripts/run_all.sh stop
+#   headless (no UI): NO_FRONTEND=1 bash scripts/run_all.sh
+```
+
+Open **http://localhost:3000/guideline**, or call the API:
+```bash
+curl -X POST http://localhost:8001/api/v1/guideline-rag/run \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"first-line antibiotics for outpatient pneumonia","external_evidence":true}'
+```
+
+## Sizing notes (24 GB GPU)
+
+- Qwen3-8B fp16 ≈ 16 GB weights; the rest is KV cache. `max_len 12288 @ util 0.92` is a safe start.
+- If you see CUDA OOM: drop `MAX_LEN` (e.g. 8192) or `GPU_UTIL` (e.g. 0.88).
+- Two 3090s? `TP=2` halves per-GPU memory and roughly doubles throughput.
+
+## Remote model server
+
+Run `serve_qwen3_local.sh` on the GPU host, then on the app host set
+`LOCAL_LLM_BASE_URL=http://<gpu-host>:8000/v1`. Ensure port 8000 is reachable (open firewall or
+`ssh -L 8000:localhost:8000 <gpu-host>`).
+
+## Access from your laptop (SSH port-forward)
+
+The `/guideline` page calls the backend from the browser, so forward **both**:
+```bash
+ssh -L 3000:localhost:3000 -L 8001:localhost:8001 <server>
+# then open http://localhost:3000/guideline
+```
+
+## Portability checklist
+
+- [ ] `conda activate chatclinic` (or a venv with `vllm`) before serving.
+- [ ] `.env` set: `LOCAL_LLM_BASE_URL`, `EMBED_MODEL`, `PUBMED_EMAIL`.
+- [ ] Index built (`run_all.sh` does it, or `python -m plugins.guideline_index_tool.logic`).
+- [ ] Ports 8000/8001/3000 reachable (or forwarded).
+- [ ] First run downloads Qwen3-8B (~16 GB) + the embedder — needs internet (or pre-cache `HF_HOME`).
